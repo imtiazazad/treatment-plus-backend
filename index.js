@@ -5,7 +5,13 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+const corsConfig = {
+  origin: true,
+  credentials: true,
+};
+
+app.use(cors(corsConfig));
+app.options("*", cors(corsConfig));
 app.use(express.json());
 
 // DB_USER=treatment_admin
@@ -19,7 +25,20 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         await client.connect();
-        console.log('connected');
+        const productCollection = client.db('treatment_plus').collection('doctors');
+
+        app.get('/doctor', async(req,res)=>{
+          const doctors = await productCollection.find({}).toArray()
+          res.send(doctors)
+        })
+    
+        app.get('/singleDoctor', async(req,res)=>{
+          const id = req.query.id;
+          const filter = {_id: ObjectId(id)}
+          const singleDoctor =await productCollection.findOne(filter)
+          res.send(singleDoctor)
+    
+        })
     }
     finally{
 
